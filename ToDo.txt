@@ -1,0 +1,7 @@
+1. Write a function that identifies and flips verticle images before image processing.
+2. Handel errors where the identity is split between paragraphs. Currently, these paragraphs have
+less than 3 elements and are removed by the RemoveDeadElements function.
+3. Handel errors where one letter is being read as two numbers (e.g. ['B'] as ['1', '3'])
+4. Get script to pull from remote google cloud storage bucket.
+5. Manually label a thousand or so images. 
+6. Compare manual and generated results and calculate successful percentage. 
