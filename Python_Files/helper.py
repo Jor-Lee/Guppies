@@ -171,12 +171,14 @@ def IdentityErrors(identity, verbose=False):
     for i, character in enumerate(identity):
         if i == 0 or i == 2 or i == 4:
             if character not in acceptable_numbers:
+                if verbose: print("Replacing erroneous letter (%s) at index %s with a matched alternative." %(identity[i], i))
                 identity = ReplaceLetter(identity, i)
                 new_number = identity[i]
                 if verbose: print("Character %s at index %s has been replace with %s" %(character, i, new_number))
 
         if i == 1 or i == 3:
             if character not in acceptable_letters:
+                if verbose: print("Replacing erroneous number (%s) with a matched alternative." %identity[i])
                 identity = ReplaceNumber(identity, i)
                 new_number = identity[i]
                 if verbose: print("Character %s at index %s has been replace with %s" %(character, i, new_number))
@@ -212,14 +214,11 @@ letters_to_numbers = [['G', '6'], ['B', '3'], ['S', '5'], ['Y', '7'], ['T', '1']
 def ReplaceNumber(identity, i, verbose=False):
     """Replaces the erroneous number at index i with a matched alternative from numbers_to_letters. (e.g.
     '0' goes to 'O', '2' goes to 'S' etc.)"""
-    if verbose: print("Replacing erroneous number (%s) with a matched alternative." %identity[i])
-
     number_error = identity[i]
 
     for element in numbers_to_letters:
         if number_error in element:
             new_character = element[1]
-            if verbose: print("Replaced %s with %s at index %s" %(number_error, new_character, i))
             split_identity = list(identity)
             split_identity[i] = new_character
             identity = ''.join(split_identity)
@@ -227,16 +226,13 @@ def ReplaceNumber(identity, i, verbose=False):
     return identity
 
 
-def ReplaceLetter(identity, i,verbose=False):
+def ReplaceLetter(identity, i, verbose=False):
     """Similar to above but replaces letters with matched numbers."""
-    if verbose: print("Replacing erroneous letter (%s) at index %s with a matched alternative." %(identity[i], i))
-
     letter_error = identity[i]
 
     for element in letters_to_numbers:
         if letter_error in element:
             new_character = element[1]
-            if verbose:  print("Replacing '%s' with '%s' at index %s" %(letter_error, new_character, i))
             split_identity = list(identity)
             split_identity[i] = new_character
             identity = ''.join(split_identity)
