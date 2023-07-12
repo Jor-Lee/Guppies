@@ -7,16 +7,18 @@ import os
 
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = r"/Users/jordan/Desktop/Guppies_Home/guppies-test-f7e2b73324f8.json"
 
-def ListAvaliableFiles(bucket_name):
+
+def ListAvaliableFiles(bucket_name, verbose=False):
     """Lists all avaliable files in the bucket. Useful for cycling through all files in a loop."""
     storage_client = storage.Client()
     bucket = storage_client.bucket(bucket_name)
     file_list = storage_client.list_blobs(bucket_name)
     file_list = [file.name for file in file_list]
-    print("Files have been read.")
+    if verbose: print("\nFiles have been read.")
     return file_list
 
-def RetreiveImage(file): 
+
+def RetreiveImage(file, verbose=False): 
     """Retreives an image from the google cloud bucket and returns it as an array of bytes."""
     bucket_name = "guppy_images"
     storage_client = storage.Client()
@@ -24,26 +26,28 @@ def RetreiveImage(file):
 
     file_list = storage_client.list_blobs(bucket_name)
     file_list = [file.name for file in file_list]
-    file_test_name = file_list[0]
 
     blob = bucket.blob(file)
     
     img_bytes = BytesIO(blob.download_as_bytes())
 
-    print("\nImage has been read from google bucket.")
+    if verbose: print("\nImage has been read from google bucket.")
 
     return img_bytes
 
-def LoadImage(file):
+
+def LoadImage(file, verbose=False):
     """Reads a local image and returns an array of bytes. Similar to RetreiveImage function but for local data."""
     image = Image.open(file)
     byte_arr = BytesIO()
     image.save(byte_arr, format='jpeg')
     img_bytes = BytesIO(byte_arr.getvalue())
 
+    if verbose: print("\nImage has been read from local file.")
+
     return img_bytes
 
-def CroppedImage(img_bytes):
+def CroppedImage(img_bytes, verbose=False):
     """Takes an image as an array of bytes and returns a cropped image as an array of bytes."""
     img = Image.open(img_bytes)
     width, height = img.size
@@ -58,12 +62,12 @@ def CroppedImage(img_bytes):
     cropped_image.save(cropped_byte_arr, format='jpeg')
     cropped_byte_arr = BytesIO(cropped_byte_arr.getvalue())
 
-    print("\nImage has been cropped.")
+    if verbose: print("\nImage has been cropped.")
 
     return cropped_byte_arr
 
 
-def ReadImage(img_byte_array):
+def ReadImage(img_byte_array, verbose=False):
     """Reads an image as an array of bytes and returns the text in the output format required."""
     from google.cloud import vision
     from PIL import Image
@@ -96,11 +100,11 @@ def ReadImage(img_byte_array):
             "https://cloud.google.com/apis/design/errors".format(response.error.message)
         )
 
-    print('\nOutput:', output_string[:-1].upper(), "\nConfidence:", np.prod(word_confidences))
+    if verbose: print('\nOutput:', output_string[:-1].upper(), "\nConfidence:", np.prod(word_confidences))
     return output_string[:-1].upper(), word_confidences
 
 
-def RemoveSpecialCharacters(output_string,verbose=False):
+def RemoveSpecialCharacters(output_string, verbose=False):
     """Function removes all special characters that are read by the OCR."""
     if verbose: print("\nRemoving special characters from the output string (e.g. '.', '|').")
     for character in output_string:
@@ -115,7 +119,7 @@ def RemoveSpecialCharacters(output_string,verbose=False):
 
 def RemoveDeadElements(output_split, verbose=False):
     """Function removes paragraphs that are not the right size. These paragraphs are often formed when the 
-    OCR reads spetial characters frin the image."""
+    OCR reads spetial characters from the image."""
     if verbose: print("\nRemoving paragraphs without three (3), four (4), five (5) or eight (8) elements.")
     empty = []
 
@@ -137,7 +141,7 @@ def RemoveDeadElements(output_split, verbose=False):
 
 
 def TitleErrors(title, verbose=False):
-    """Finds errors in the title. The title should be three (3) characters long and contain only english capitcal letters."""
+    """Finds errors in the title. The title should be three (3) characters long and contain only english capital letters."""
     if verbose: print("\nLooking for errors in the title (%s)." %title)
 
     if len(title) != 3:
