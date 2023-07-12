@@ -34,6 +34,15 @@ def RetreiveImage(file):
 
     return img_bytes
 
+def LoadImage(file):
+    """Reads a local image and returns an array of bytes. Similar to RetreiveImage function but for local data."""
+    image = Image.open(file)
+    byte_arr = BytesIO()
+    image.save(byte_arr, format='jpeg')
+    img_bytes = BytesIO(byte_arr.getvalue())
+
+    return img_bytes
+
 def CroppedImage(img_bytes):
     """Takes an image as an array of bytes and returns a cropped image as an array of bytes."""
     img = Image.open(img_bytes)
