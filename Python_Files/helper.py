@@ -2,10 +2,41 @@ from google.cloud import vision
 from google.cloud import storage
 from PIL import Image
 import numpy as np
+from io import BytesIO
+import os
 
-def CroppedImage(file):
-    """Crops the image to only include the label."""
-    img = Image.open(file)
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = r"/Users/jordan/Desktop/Guppies_Home/guppies-test-f7e2b73324f8.json"
+
+def ListAvaliableFiles(bucket_name):
+    """Lists all avaliable files in the bucket. Useful for cycling through all files in a loop."""
+    storage_client = storage.Client()
+    bucket = storage_client.bucket(bucket_name)
+    file_list = storage_client.list_blobs(bucket_name)
+    file_list = [file.name for file in file_list]
+    print("Files have been read.")
+    return file_list
+
+def RetreiveImage(file): 
+    """Retreives an image from the google cloud bucket and returns it as an array of bytes."""
+    bucket_name = "guppy_images"
+    storage_client = storage.Client()
+    bucket = storage_client.bucket(bucket_name)
+
+    file_list = storage_client.list_blobs(bucket_name)
+    file_list = [file.name for file in file_list]
+    file_test_name = file_list[0]
+
+    blob = bucket.blob(file)
+    
+    img_bytes = BytesIO(blob.download_as_bytes())
+
+    print("\nImage has been read from google bucket.")
+
+    return img_bytes
+
+def CroppedImage(img_bytes):
+    """Takes an image as an array of bytes and returns a cropped image as an array of bytes."""
+    img = Image.open(img_bytes)
     width, height = img.size
 
     left = 1 * width / 4
@@ -14,22 +45,26 @@ def CroppedImage(file):
     bottom = height / 3
     cropped_image = img.crop((left, top, right, bottom))
 
-    cropstring = file.split('raw')[0] + 'cropped' + file.split('raw')[1]
+    cropped_byte_arr = BytesIO()
+    cropped_image.save(cropped_byte_arr, format='jpeg')
+    cropped_byte_arr = BytesIO(cropped_byte_arr.getvalue())
 
-    cropped_image.save(cropstring)
+    print("\nImage has been cropped.")
+
+    return cropped_byte_arr
 
 
-def ReadImage(cropped_path, verbose = False):
-
+def ReadImage(img_byte_array):
+    """Reads an image as an array of bytes and returns the text in the output format required."""
+    from google.cloud import vision
+    from PIL import Image
+    import numpy as np
 
     client = vision.ImageAnnotatorClient()
-
-    with open(cropped_path, "rb") as image_file:
-        content = image_file.read()
-
+    content = img_byte_array.getvalue()
     image = vision.Image(content=content)
 
-    response = client.document_text_detection(image=image, image_context={"language_hints": ["ko"]})
+    response = client.document_text_detection(image=image, image_context={"language_hints": ["en"]})
 
     output_string = ''
 
@@ -52,12 +87,8 @@ def ReadImage(cropped_path, verbose = False):
             "https://cloud.google.com/apis/design/errors".format(response.error.message)
         )
 
-    if verbose:  print('Output:', output_string[:-1].upper(), "\nConfidence:", np.prod(word_confidences))
-
+    print('\nOutput:', output_string[:-1].upper(), "\nConfidence:", np.prod(word_confidences))
     return output_string[:-1].upper(), word_confidences
-
-
-
 
 
 def RemoveSpecialCharacters(output_string,verbose=False):
@@ -71,6 +102,7 @@ def RemoveSpecialCharacters(output_string,verbose=False):
             output_string = output_string.replace(character, "")
 
     return output_string
+
 
 def RemoveDeadElements(output_split, verbose=False):
     """Function removes paragraphs that are not the right size. These paragraphs are often formed when the 
@@ -95,7 +127,6 @@ def RemoveDeadElements(output_split, verbose=False):
     return output_split
 
 
-
 def TitleErrors(title, verbose=False):
     """Finds errors in the title. The title should be three (3) characters long and contain only english capitcal letters."""
     if verbose: print("\nLooking for errors in the title (%s)." %title)
@@ -111,6 +142,7 @@ def TitleErrors(title, verbose=False):
     if verbose: print("Final title:", title)
 
     return title
+
 
 def IdentityErrors(identity, verbose=False):
     """Finds errors in the identity. The identy should be four (4) or five (5) characters long and should follow the
@@ -139,6 +171,7 @@ def IdentityErrors(identity, verbose=False):
     if verbose: print("Final identity:", identity)
     
     return identity
+
 
 def DateErrors(whole_date, verbose=False):
     """Finds errors in the date. The format of the date is mm/dd/yy."""
@@ -179,6 +212,7 @@ def ReplaceNumber(identity, i, verbose=False):
             identity = ''.join(split_identity)
 
     return identity
+
 
 def ReplaceLetter(identity, i,verbose=False):
     """Similar to above but replaces letters with matched numbers."""
