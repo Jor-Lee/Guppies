@@ -124,7 +124,7 @@ def RemoveDeadElements(output_split, verbose=False):
     empty = []
 
     for element in output_split:
-        if len(element) == 3 or len(element) == 4 or len(element) == 5 or len(element) == 8:
+        if len(element) == 3 or len(element) == 4 or len(element) == 5 or len(element) == 8 or len(element) == 9:
             empty.append(element)
         else:
             if element == "":
@@ -192,17 +192,28 @@ def DateErrors(whole_date, verbose=False):
     """Finds errors in the date. The format of the date is mm/dd/yy."""
     if verbose: print("\nLooking for errors in the date (%s)." %whole_date)
 
-    if len(whole_date) != 8:
+    if len(whole_date) != 8 and len(whole_date) != 9:
         if verbose: print("length of the date is incorrect. Current length is %i, required length is eight (8)." %len(whole_date))
         return 1
     
-    for i, character in enumerate(whole_date):
-        if i in [0, 1, 3, 4, 6, 7]:
-            if not '0' <= character <= '9':
-                if verbose: print("Invalid date. Date contains %s at index %i" %(character, i))
-        if i in [2, 5]:
-            if character != '/':
-                if verbose: print("Invalid date. Date contains %s at index %i" %(character, i))
+    if len(whole_date) == 8:
+        for i, character in enumerate(whole_date):
+            if i in [0, 1, 3, 4, 6, 7]:
+                if not '0' <= character <= '9':
+                    if verbose: print("Invalid date. Date contains %s at index %i" %(character, i))
+            if i in [2, 5]:
+                if character != '/':
+                    if verbose: print("Invalid date. Date contains %s at index %i" %(character, i))
+
+    if len(whole_date) == 9:
+            for i, character in enumerate(whole_date):
+                if i in [0, 1, 2, 4, 5, 7, 8]:
+                    if not '0' <= character <= '9':
+                        if verbose: print("Invalid date. Date contains %s at index %i" %(character, i))
+                if i in [4, 6]:
+                    if character != '/':
+                        if verbose: print("Invalid date. Date contains %s at index %i" %(character, i))
+    
 
     if verbose: print("Final date:", whole_date)
     return whole_date
