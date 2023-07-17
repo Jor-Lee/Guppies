@@ -104,14 +104,20 @@ def ReadImage(img_byte_array, verbose=False):
     return output_string[:-1].upper(), word_confidences
 
 
+ReplaceSpecialCharacter = [['(', '1'], ['\\', '1'], ['+', 'G']]
 def RemoveSpecialCharacters(output_string, verbose=False):
     """Function removes all special characters that are read by the OCR."""
     if verbose: print("\nRemoving special characters from the output string (e.g. '.', '|').")
+
+    for character in output_string:
+        for element in ReplaceSpecialCharacter:
+            if character in element:
+                output_string = output_string.replace(element[0], element[1])
+                if verbose: print("characters %s have been replaced with %s" %(element[0], element[1]))
+        
     for character in output_string:
         if 'A' <= character <= 'Z' or '0' <= character <= '9' or character == '/' or character == '-':
             if verbose:  print("Character %s is fine." %character)
-        elif character == r"\\" or character == '|' or character == "(":
-            output_string = output_string.replace(character, "1")
         else:
             if verbose: print("Character %s has been removed." %character)
             output_string = output_string.replace(character, "")
@@ -275,6 +281,8 @@ def preprocess_string(output_string, verbose=False):
 
     new_split = [output_split[0], identity, output_split[-1]]
 
+    if verbose: print("String after preprocessing: %s" %new_split)
+
     return new_split
 
 
@@ -289,9 +297,9 @@ def FindErrors(output_string, verbose=False):
         if verbose: print("Output string is empty.")
         return 1
 
-    output_split = preprocess_string(output_string, verbose=verbose)
-
     output_string = RemoveSpecialCharacters(output_string, verbose=verbose)
+
+    output_split = preprocess_string(output_string, verbose=verbose)
 
     # output_split = RemoveDeadElements(output_split, verbose=verbose)
 
