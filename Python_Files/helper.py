@@ -219,16 +219,16 @@ def DateErrors(whole_date, verbose=False):
     return whole_date
 
 
-numbers_to_letters = [['0', 'O'], ['1', 'I'],['2', 'S'], ['3', 'B'], ['4', 'Y'], ['5', 'S'], ['6', 'G'], ['7', 'Y']]
-letters_to_numbers = [['G', '6'], ['B', '3'], ['S', '5'], ['Y', '7'], ['T', '1'], ['A', '7'], ['Z', '2']]
+insert_letter = [['0', 'O'], ['1', 'I'],['2', 'S'], ['3', 'B'], ['4', 'Y'], ['5', 'S'], ['6', 'G'], ['7', 'Y'], ['U', 'V'], ['8', 'F'], ['E', 'F']]
+insert_number = [['G', '6'], ['B', '3'], ['S', '5'], ['Y', '7'], ['T', '1'], ['A', '7'], ['Z', '2'], ['E', '8'], ['I', '1'], ['U', '4']]
 
 def ReplaceNumber(identity, i, verbose=False):
     """Replaces the erroneous number at index i with a matched alternative from numbers_to_letters. (e.g.
     '0' goes to 'O', '2' goes to 'S' etc.)"""
-    number_error = identity[i]
+    character_error = identity[i]
 
-    for element in numbers_to_letters:
-        if number_error in element:
+    for element in insert_letter:
+        if character_error in element:
             new_character = element[1]
             split_identity = list(identity)
             split_identity[i] = new_character
@@ -239,10 +239,10 @@ def ReplaceNumber(identity, i, verbose=False):
 
 def ReplaceLetter(identity, i, verbose=False):
     """Similar to above but replaces letters with matched numbers."""
-    letter_error = identity[i]
+    character_error = identity[i]
 
-    for element in letters_to_numbers:
-        if letter_error in element:
+    for element in insert_number:
+        if character_error in element:
             new_character = element[1]
             split_identity = list(identity)
             split_identity[i] = new_character
