@@ -104,7 +104,7 @@ def ReadImage(img_byte_array, verbose=False):
     return output_string[:-1].upper(), word_confidences
 
 
-ReplaceSpecialCharacter = [['(', '1'], ['\\', '1'], ['+', 'G']]
+ReplaceSpecialCharacter = [['(', '1'], ['\\', '1'], ['+', 'G'], ['~~', 'W']]
 def RemoveSpecialCharacters(output_string, verbose=False):
     """Function removes all special characters that are read by the OCR."""
     if verbose: print("\nRemoving special characters from the output string (e.g. '.', '|').")
