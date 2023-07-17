@@ -266,6 +266,9 @@ def preprocess_string(output_string, verbose=False):
 
     output_split = output_string.split('-')
 
+    # Remove any empty elements.
+    output_split[:] = [x for x in output_split if len(x) > 0]
+
     #first drop anything before the title. 
     if output_split[0][0] != 'F' and output_split[0][0] != 'M':
         output_split = output_split[1:]
