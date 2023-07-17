@@ -110,6 +110,8 @@ def RemoveSpecialCharacters(output_string, verbose=False):
     for character in output_string:
         if 'A' <= character <= 'Z' or '0' <= character <= '9' or character == '/' or character == '-':
             if verbose:  print("Character %s is fine." %character)
+        elif character == r"\\" or character == '|' or character == "(":
+            output_string = output_string.replace(character, "1")
         else:
             if verbose: print("Character %s has been removed." %character)
             output_string = output_string.replace(character, "")
@@ -251,14 +253,47 @@ def ReplaceLetter(identity, i, verbose=False):
     return identity
 
 
+def preprocess_string(output_string, verbose=False):
+    '''
+    We noticed that sometimes the identity gets split across two sections.
+    '''
+
+    output_split = output_string.split('-')
+
+    #first drop anything before the title. 
+    if output_split[0][0] != 'F' and output_split[0][0] != 'M':
+        output_split = output_split[1:]
+
+    # drop anything after the date. 
+    date_element = np.argmax(['/' in i for i in output_split])
+    output_split = output_split[:date_element+1]
+
+    #now append everything in the middle together.
+    identity = ''
+    for i in output_split[1:-1]:
+        identity += i
+
+    new_split = [output_split[0], identity, output_split[-1]]
+
+    return new_split
+
+
+
+
 
 def FindErrors(output_string, verbose=False):
     """Function to find all the errors associated with the inital output with subfunctions which act to rectify these errors and 
     present the output in a suitable format."""
+
+    if output_string == "":
+        if verbose: print("Output string is empty.")
+        return 1
+
+    output_split = preprocess_string(output_string, verbose=verbose)
+
     output_string = RemoveSpecialCharacters(output_string, verbose=verbose)
 
-    output_split = output_string.split('-')
-    output_split = RemoveDeadElements(output_split, verbose=verbose)
+    # output_split = RemoveDeadElements(output_split, verbose=verbose)
 
     if len(output_split) != 3:
         if verbose: print("Incorrect number of paragraphs. There are %i, there should be three (3)" %len(output_split))
