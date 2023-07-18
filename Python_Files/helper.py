@@ -227,7 +227,7 @@ def DateErrors(whole_date, verbose=False):
     return whole_date
 
 
-insert_letter = [['0', 'O'], ['1', 'I'],['2', 'S'], ['3', 'B'], ['4', 'Y'], ['5', 'S'], ['6', 'G'], ['7', 'Y'], ['U', 'V'], ['8', 'F'], ['E', 'F']]
+insert_letter = [['0', 'O'], ['1', 'I'],['2', 'S'], ['3', 'B'], ['4', 'Y'], ['5', 'S'], ['6', 'G'], ['7', 'Y'], ['U', 'V'], ['8', 'F'], ['E', 'F'], ['X', 'K']]
 insert_number = [['G', '6'], ['B', '3'], ['S', '5'], ['Y', '7'], ['T', '1'], ['A', '7'], ['Z', '2'], ['E', '8'], ['I', '1'], ['U', '4']]
 
 def ReplaceNumber(identity, i, verbose=False):
@@ -272,6 +272,16 @@ def preprocess_string(output_string, verbose=False):
     #first drop anything before the title. 
     if output_split[0][0] != 'F' and output_split[0][0] != 'M':
         output_split = output_split[1:]
+
+    # Removes any characters added to the end of the title. Often A's or X's from people puting stars on the label. e.g. FCAX -> FCA
+    if len(output_split[0]) == 4:
+        output_split[0] = output_split[0][0:3]
+
+    # Removes lone A's or X's that have been read as a sperate line. Again, these are typically read because 
+    # people have starred the label. e.g. FCA-X-3B7Y -> FCA-3B7Y
+    for i, output in enumerate(output_split):
+        if output == 'X' or output == 'A':
+            output_split.pop(i)
 
     # drop anything after the date. 
     date_element = np.argmax(['/' in i for i in output_split])
