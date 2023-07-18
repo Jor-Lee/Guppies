@@ -154,6 +154,7 @@ def TitleErrors(title, verbose=False):
 
     if len(title) != 3:
         if verbose: print("Incorrect title length. Title has %i elements, three (3) are required." %len(title))
+        return 1
 
     for character in title:
         if not 'A' <= character <= 'Z':
@@ -173,18 +174,19 @@ def IdentityErrors(identity, verbose=False):
     acceptable_numbers = ['1', '2', '3', '4', '5', '6', '7', '8']
     acceptable_letters = ['B', 'F', 'G', 'K', 'N', 'O', 'P', 'R', 'S', 'V', 'W', 'Y']
 
-    if len(identity) != 4 and len(identity) != 5:
+    if len(identity) < 4:
         if verbose: print("Incorrect identity length. Identity has %i elements, four (4) or five (5) are required." %len(identity))
+        return 1
 
     for i, character in enumerate(identity):
-        if i == 0 or i == 2 or i == 4:
+        if i%2 == 0:
             if character not in acceptable_numbers:
                 if verbose: print("Replacing erroneous letter (%s) at index %s with a matched alternative." %(identity[i], i))
                 identity = ReplaceLetter(identity, i)
                 new_number = identity[i]
                 if verbose: print("Character %s at index %s has been replace with %s" %(character, i, new_number))
 
-        if i == 1 or i == 3:
+        if i%2 == 1:
             if character not in acceptable_letters:
                 if verbose: print("Replacing erroneous number (%s) with a matched alternative." %identity[i])
                 identity = ReplaceNumber(identity, i)
@@ -269,7 +271,7 @@ def preprocess_string(output_string, verbose=False):
     # Remove any empty elements.
     output_split[:] = [x for x in output_split if len(x) > 0]
 
-    #first drop anything before the title. 
+    # First drop anything before the title. 
     if output_split[0][0] != 'F' and output_split[0][0] != 'M':
         output_split = output_split[1:]
 
@@ -287,7 +289,7 @@ def preprocess_string(output_string, verbose=False):
     date_element = np.argmax(['/' in i for i in output_split])
     output_split = output_split[:date_element+1]
 
-    #now append everything in the middle together.
+    # now append everything in the middle together.
     identity = ''
     for i in output_split[1:-1]:
         identity += i
@@ -328,7 +330,20 @@ def FindErrors(output_string, verbose=False):
     identity = IdentityErrors(identity, verbose=verbose)
     whole_date = DateErrors(whole_date, verbose=verbose)
 
-    label = "%s-%s-%s" %(str(title), str(identity), str(whole_date))
-    if verbose: print("\nFinal label is:", label)
+    if title == 1:
+        if verbose: print("Incorrectly labelled the title.")
+        return 1
     
-    return label
+    elif identity == 1:
+        if verbose: print("Incorrectly labelled the title.")
+        return 1
+    
+    elif whole_date == 1:
+        if verbose: print("Incorrectly labelled the date.")
+        return 1
+
+    else:
+        label = "%s-%s-%s" %(str(title), str(identity), str(whole_date))
+        if verbose: print("\nFinal label is:", label)
+    
+        return label
