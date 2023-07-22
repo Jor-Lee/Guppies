@@ -190,6 +190,7 @@ def IdentityErrors(identity, verbose=False):
             if character not in acceptable_letters:
                 if verbose: print("Replacing erroneous number (%s) with a matched alternative." %identity[i])
                 identity = ReplaceNumber(identity, i)
+                
                 new_number = identity[i]
                 if verbose: print("Character %s at index %s has been replace with %s" %(character, i, new_number))
 
@@ -229,8 +230,8 @@ def DateErrors(whole_date, verbose=False):
     return whole_date
 
 
-insert_letter = [['0', 'O'], ['1', 'I'],['2', 'S'], ['3', 'B'], ['4', 'Y'], ['5', 'S'], ['6', 'G'], ['7', 'Y'], ['U', 'V'], ['8', 'F'], ['E', 'F'], ['X', 'K']]
-insert_number = [['G', '6'], ['B', '3'], ['S', '5'], ['Y', '7'], ['T', '1'], ['A', '7'], ['Z', '2'], ['E', '8'], ['I', '1'], ['U', '4']]
+insert_letter = [['0', 'O'], ['1', 'K'],['2', 'S'], ['3', 'B'], ['4', 'Y'], ['5', 'S'], ['6', 'G'], ['7', 'Y'], ['U', 'V'], ['8', 'F'], ['E', 'F'], ['X', 'K'], ['I', 'K'], ['C', 'G']]
+insert_number = [['G', '6'], ['B', '3'], ['S', '5'], ['Y', '7'], ['T', '1'], ['A', '7'], ['Z', '2'], ['E', '8'], ['I', '1'], ['U', '4'], ['Q', '2'], ['J', '1'], ['H', '4'], ['9', '4']]
 
 def ReplaceNumber(identity, i, verbose=False):
     """Replaces the erroneous number at index i with a matched alternative from numbers_to_letters. (e.g.
@@ -259,6 +260,32 @@ def ReplaceLetter(identity, i, verbose=False):
             identity = ''.join(split_identity)
 
     return identity
+
+
+# DOES NOT WORK ATM!!
+
+# def ReplaceCharacter(identity, i, ConfusionMatrixPath, insert_type, verbose=False):
+#     confusion_matrix = np.load(ConfusionMatrixPath + '/confusion_matrix.npy')
+#     true_chars_unique = np.load(ConfusionMatrixPath + '/confusion_true_chars.npy')
+#     pred_chars_unique = np.load(ConfusionMatrixPath + '/confusion_pred_chars.npy')
+
+#     character_error = identity[i]
+#     pred_index = list(pred_chars_unique).index(character_error)
+#     pred_chars_unique[pred_index]
+
+#     if insert_type == 'number':
+#         optimum_true_index = np.argmax(confusion_matrix[0:8, pred_index])
+#         optimum_true_character = true_chars_unique[optimum_true_index]
+    
+#     if insert_type == 'letter':
+#         optimum_true_index = np.argmax(confusion_matrix[8:, pred_index])
+#         optimum_true_character = true_chars_unique[8:][optimum_true_index]
+
+#     split_identity = list(identity)
+#     split_identity[i] = optimum_true_character
+#     identity = ''.join(split_identity)
+
+#     return identity
 
 
 def preprocess_string(output_string, verbose=False):
