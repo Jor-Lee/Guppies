@@ -230,8 +230,10 @@ def DateErrors(whole_date, verbose=False):
     return whole_date
 
 
-insert_letter = [['0', 'O'], ['1', 'K'],['2', 'S'], ['3', 'B'], ['4', 'Y'], ['5', 'S'], ['6', 'G'], ['7', 'Y'], ['U', 'V'], ['8', 'F'], ['E', 'F'], ['X', 'K'], ['I', 'K'], ['C', 'G']]
-insert_number = [['G', '6'], ['B', '3'], ['S', '5'], ['Y', '7'], ['T', '1'], ['A', '7'], ['Z', '2'], ['E', '8'], ['I', '1'], ['U', '4'], ['Q', '2'], ['J', '1'], ['H', '4'], ['9', '4']]
+insert_letter = [['0', 'O'], ['1', 'K'],['2', 'S'], ['3', 'B'], ['4', 'Y'], ['5', 'S'], ['6', 'G'], ['7', 'Y'], ['8', 'F'], \
+                 ['U', 'V'], ['E', 'F'], ['X', 'K'], ['I', 'K'], ['C', 'G']]
+insert_number = [['G', '6'], ['B', '3'], ['S', '5'], ['Y', '7'], ['T', '1'], ['A', '7'], ['Z', '2'], ['E', '8'], ['I', '1'], \
+                 ['U', '4'], ['Q', '2'], ['J', '1'], ['H', '4'], ['9', '4']]
 
 def ReplaceNumber(identity, i, verbose=False):
     """Replaces the erroneous number at index i with a matched alternative from numbers_to_letters. (e.g.
