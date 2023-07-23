@@ -5,6 +5,8 @@ import numpy as np
 from io import BytesIO
 import os
 import csv
+from tempfile import NamedTemporaryFile
+import shutil
 
 from corrections import *
 from image import * 
@@ -43,20 +45,23 @@ def CorrectedLabel(file, storage, verbose=False):
 
 def ReanalysePredictions(prediction_file, verbose=False):
     """Updates the prediction file with any edits we have made to the correction code."""
-    with open(f'../Data/{prediction_file}_new.csv', 'w') as f_new:
-        with open(f'../Data/{prediction_file}.csv', 'r') as f:
-            filereader = csv.reader(f)
-            writer = csv.writer(f_new)
-            for n, row in enumerate(filereader):
-                if row != []:
-                    new_row = row[:2]
+    filename = prediction_file
+    tempfile = NamedTemporaryFile('w+t', newline='', delete=False)
+    with open(filename, 'r', newline='') as csvFile, tempfile:
+        reader = csv.reader(csvFile, delimiter=',', quotechar='"')
+        writer = csv.writer(tempfile, delimiter=',', quotechar='"')
+        for n, row in enumerate(reader):
+            if row != []:
+                new_row = row[:2]
 
-                    new_prediction = FindErrors(row[1])
+                new_prediction = FindErrors(row[1])
 
-                    new_row.append(new_prediction)
-                    new_row.append(row[3])
+                new_row.append(new_prediction)
+                new_row.append(row[3])
 
-                    writer.writerow(new_row)
+                writer.writerow(new_row)
+
+    shutil.move(tempfile.name, filename)
 
     if verbose: print("Reanalysed predictions")
 
