@@ -20,6 +20,7 @@ def ListAvaliableFiles(bucket_name, verbose=False):
 
 
 def CorrectedLabel(file, storage, verbose=False):
+    """Reads the image (either locally or remotely) and returns the initially read and the corrected label."""
     if storage == 'local':
         iamge = LoadImage(file, verbose=verbose)
     
@@ -34,13 +35,14 @@ def CorrectedLabel(file, storage, verbose=False):
     output_string, word_confidences = ReadImage(cropped_image, verbose=verbose)
     label = FindErrors(output_string, verbose=verbose)
     
-    print("\n   Initial label:", output_string,
+    print("\nInitial label:", output_string,
         "\nCorrected label:", label)
     
     return image, output_string, label, word_confidences
 
 
 def ReanalysePredictions(prediction_file, verbose=False):
+    """Updates the prediction file with any edits we have made to the correction code."""
     with open(f'../Data/{prediction_file}_new.csv', 'w') as f_new:
         with open(f'../Data/{prediction_file}.csv', 'r') as f:
             filereader = csv.reader(f)
@@ -60,6 +62,8 @@ def ReanalysePredictions(prediction_file, verbose=False):
 
 
 def AccuracyCheck(truth_file, verbose=False):
+    """Compares the corrected predictions to the truth and determines if the prediction is correct, incorrect (attempted and wrong)
+    or invalide (not attempted). Characters that were confused are added to the character_confusions list."""
     correct_files = []
     incorrect_files = []
     invalid_files = []
@@ -111,3 +115,18 @@ def AccuracyCheck(truth_file, verbose=False):
     print("Total % Correct:", len(correct_files) / (len(correct_files) + len(incorrect_files) + len(invalid_files)))
 
     return correct_files, incorrect_files, invalid_files, character_confusions
+
+
+def ConfusionMatrix(character_confusions):
+    true_chars = [X[0] for X in character_confusions]
+    true_chars_unique = np.unique(true_chars)
+    pred_chars = [X[1] for X in character_confusions]
+    pred_chars_unique = np.unique(pred_chars)
+
+    confusion_matrix =  np.zeros((len(true_chars_unique), len(pred_chars_unique)))
+
+    for i in range(len(true_chars_unique)):
+        for j in range(len(pred_chars_unique)):
+            confusion_matrix[i,j] = np.sum((character_confusions[:,0] == true_chars_unique[i]) & (character_confusions[:,1] == pred_chars_unique[j]))
+
+    return true_chars_unique, pred_chars_unique, confusion_matrix
