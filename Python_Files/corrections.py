@@ -141,12 +141,23 @@ def IdentityErrors(identity, verbose=False):
 
 
 def DateErrors(whole_date, verbose=False):
-    """Finds errors in the date. The format of the date is mm/dd/yy."""
+    """Finds errors in the date."""
     if verbose: print("\nLooking for errors in the date (%s)." %whole_date)
 
-    if len(whole_date) != 8 and len(whole_date) != 9:
-        if verbose: print("length of the date is incorrect. Current length is %i, required length is eight (8)." %len(whole_date))
+    if len(whole_date) != 7 and len(whole_date) != 8 and len(whole_date) != 9:
+        if verbose: print("length of the date is incorrect. Current length is %i, required length is seven (7), eight (8) or nine (9)." %len(whole_date))
         return 1
+    
+    if len(whole_date) == 7:
+        for i, character in enumerate(whole_date):
+            if i in [0, 2, 3, 5, 6]:
+                if not '0' <= character <= '9':
+                    if verbose: print("Invalid date. Date contains %s at index %i" %(character, i))
+            if i in [1, 4]:
+                if character != '/':
+                    if verbose: print("Invalid date. Date contains %s at index %i" %(character, i))
+
+        whole_date = "0" + whole_date
     
     if len(whole_date) == 8:
         for i, character in enumerate(whole_date):
@@ -158,14 +169,16 @@ def DateErrors(whole_date, verbose=False):
                     if verbose: print("Invalid date. Date contains %s at index %i" %(character, i))
 
     if len(whole_date) == 9:
-            for i, character in enumerate(whole_date):
-                if i in [0, 1, 2, 4, 5, 7, 8]:
-                    if not '0' <= character <= '9':
-                        if verbose: print("Invalid date. Date contains %s at index %i" %(character, i))
-                if i in [4, 6]:
-                    if character != '/':
-                        if verbose: print("Invalid date. Date contains %s at index %i" %(character, i))
-    
+        for i, character in enumerate(whole_date):
+            if i in [0, 1, 2, 4, 5, 7, 8]:
+                if not '0' <= character <= '9':
+                    if verbose: print("Invalid date. Date contains %s at index %i" %(character, i))
+            if i in [4, 6]:
+                if character != '/':
+                    if verbose: print("Invalid date. Date contains %s at index %i" %(character, i))
+
+        whole_date = whole_date[1:]
+
 
     if verbose: print("Final date:", whole_date)
     return whole_date
@@ -309,7 +322,6 @@ def FindErrors(output_string, verbose=False):
         return 1
 
     whole_date = DateErrors(whole_date, verbose=verbose)
-    
     if whole_date == 1:
         if verbose: print("\nIncorrectly labelled the date.")
         return 1

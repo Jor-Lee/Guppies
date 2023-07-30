@@ -135,3 +135,18 @@ def ConfusionMatrix(character_confusions):
             confusion_matrix[i,j] = np.sum((character_confusions[:,0] == true_chars_unique[i]) & (character_confusions[:,1] == pred_chars_unique[j]))
 
     return true_chars_unique, pred_chars_unique, confusion_matrix
+
+
+def TruthFromFileName(filename):
+    """Return truth from a manually labelled filename."""
+    filename = filename.replace(".JPG", "")
+    filename = filename.replace("(1)", "")
+    filename = filename.split("/")[-1]
+
+    title = filename[0:3]
+    identity = filename[3:-4]
+    date = filename[-4:]
+
+    label = title + "-" + identity + "-" + date[0:2] + "/" + date[-2:]
+
+    return label
