@@ -50,11 +50,8 @@ def RemoveSpecialCharacters(output_string, verbose=False):
     """Function removes all special characters that are read by the OCR."""
     if verbose: print("\nRemoving special characters from the output string (e.g. '.', '|').")
 
-    for character in output_string:
-        for element in ReplaceSpecialCharacter:
-            if character in element:
-                output_string = output_string.replace(element[0], element[1])
-                if verbose: print("characters %s have been replaced with %s" %(element[0], element[1]))
+    for element in ReplaceSpecialCharacter:
+        output_string = output_string.replace(element[0], element[1])
         
     for character in output_string:
         if 'A' <= character <= 'Z' or '0' <= character <= '9' or character == '/' or character == '-':
@@ -187,7 +184,7 @@ def DateErrors(whole_date, verbose=False):
 insert_letter = [['0', 'O'], ['1', 'K'],['2', 'S'], ['3', 'B'], ['4', 'Y'], ['5', 'S'], ['6', 'G'], ['7', 'Y'], ['8', 'F'], \
                  ['U', 'V'], ['E', 'F'], ['X', 'K'], ['I', 'K'], ['C', 'G']]
 insert_number = [['G', '6'], ['B', '3'], ['S', '5'], ['Y', '7'], ['T', '1'], ['A', '7'], ['Z', '2'], ['E', '8'], ['I', '1'], \
-                 ['U', '4'], ['Q', '2'], ['J', '1'], ['H', '4'], ['9', '4']]
+                 ['U', '4'], ['Q', '2'], ['J', '1'], ['H', '4'], ['9', '4'], ['/', '1']]
 
 def ReplaceNumber(identity, i, verbose=False):
     """Replaces the erroneous number at index i with a matched alternative from numbers_to_letters. (e.g.

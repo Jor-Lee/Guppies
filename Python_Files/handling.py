@@ -11,22 +11,21 @@ import shutil
 from corrections import *
 from image import * 
 
-def ListAvaliableFiles(bucket_name, verbose=False):
+def ListAvaliableFiles(bucket_name, prefix, verbose=False):
     """Lists all avaliable files in the bucket. Useful for cycling through all files in a loop."""
     storage_client = storage.Client()
-    bucket = storage_client.bucket(bucket_name)
-    file_list = storage_client.list_blobs(bucket_name)
+    file_list = storage_client.list_blobs(bucket_name, prefix=prefix)
     file_list = [file.name for file in file_list]
     if verbose: print("\nFiles have been read.")
     return file_list
 
 
-def CorrectedLabel(file, storage, verbose=False):
+def CorrectedLabel(file, storage_type='remote', verbose=False):
     """Reads the image (either locally or remotely) and returns the initially read and the corrected label."""
-    if storage == 'local':
-        iamge = LoadImage(file, verbose=verbose)
+    if storage_type == 'local':
+        image = LoadImage(file, verbose=verbose)
     
-    elif storage == 'remote':
+    elif storage_type == 'remote':
         image = RetreiveImage(file, verbose=verbose)
 
     else:
