@@ -32,6 +32,13 @@ def ReadImage(img_byte_array, verbose=False):
                 for word in paragraph.words:
                     word_text = "".join([symbol.text for symbol in word.symbols])
 
+                    if '-' in word_text:
+                        """Sometimes dates are written with'-', not '/'. This line 
+                        should short this out and replace the '-' before they 
+                        get passed to the output string"""
+                        if verbose: print('Replaced "-" in text with "/".')
+                        word_text = word_text.replace('-', '/')
+                    
                     output_string += '%s-' %word_text
                     word_confidences.append(word.confidence)
 
@@ -41,11 +48,13 @@ def ReadImage(img_byte_array, verbose=False):
             "https://cloud.google.com/apis/design/errors".format(response.error.message)
         )
 
+    output_string = output_string.upper()
+
     if verbose: print('\nInitial label:', output_string[:-1].upper(), "\nConfidence:", np.prod(word_confidences))
     return output_string[:-1].upper(), word_confidences
 
 
-ReplaceSpecialCharacter = [['(', '1'], ['\\', '1'], ['+', 'G'], ['~~', 'W']]
+ReplaceSpecialCharacter = [['(', '1'], ['\\', '1'], ['~~', 'W']]
 def RemoveSpecialCharacters(output_string, verbose=False):
     """Function removes all special characters that are read by the OCR."""
     if verbose: print("\nRemoving special characters from the output string (e.g. '.', '|').")
@@ -90,14 +99,15 @@ def TitleErrors(title, verbose=False):
     """Finds errors in the title. The title should be three (3) characters long and contain only english capital letters."""
     if verbose: print("\nLooking for errors in the title (%s)." %title)
 
-    if len(title) != 3:
-        if verbose: print("Incorrect title length. Title has %i elements, three (3) are required." %len(title))
-        return 1
-
     for character in title:
         if not 'A' <= character <= 'Z':
             if verbose: print("Incorrect character (%s) in the title" %character)
             return 1
+
+    if len(title) != 3:
+        if verbose: print("Incorrect title length. Title has %i elements, three (3) are required. Using only \
+                          the first three (3) elements." %len(title))
+        title = title[0:3]
 
     if verbose: print("Final title:", title)
 
@@ -141,10 +151,19 @@ def DateErrors(whole_date, verbose=False):
     """Finds errors in the date."""
     if verbose: print("\nLooking for errors in the date (%s)." %whole_date)
 
-    if len(whole_date) != 7 and len(whole_date) != 8 and len(whole_date) != 9:
-        if verbose: print("length of the date is incorrect. Current length is %i, required length is seven (7), eight (8) or nine (9)." %len(whole_date))
+    if len(whole_date) != 6 and len(whole_date) != 7 and len(whole_date) != 8 and len(whole_date) != 9:
+        if verbose: print("length of the date is incorrect. Current length is %i, required length is six (6), seven (7), eight (8) or nine (9)." %len(whole_date))
         return 1
     
+    if len(whole_date) == 6:
+        for i, character in enumerate(whole_date):
+            if i in [0, 2, 4, 5]:
+                if not '0' <= character <= '9':
+                    if verbose: print("Invalid date. Date contains %s at index %i" %(character, i))
+            if i in [1, 3]:
+                if character != '/':
+                    if verbose: print("Invalid date. Date contains %s at index %i" %(character, i))
+
     if len(whole_date) == 7:
         for i, character in enumerate(whole_date):
             if i in [0, 2, 3, 5, 6]:
@@ -153,8 +172,6 @@ def DateErrors(whole_date, verbose=False):
             if i in [1, 4]:
                 if character != '/':
                     if verbose: print("Invalid date. Date contains %s at index %i" %(character, i))
-
-        whole_date = "0" + whole_date
     
     if len(whole_date) == 8:
         for i, character in enumerate(whole_date):
@@ -174,8 +191,14 @@ def DateErrors(whole_date, verbose=False):
                 if character != '/':
                     if verbose: print("Invalid date. Date contains %s at index %i" %(character, i))
 
-        whole_date = whole_date[1:]
+    split_date = whole_date.split('/')
+    for i, element in enumerate(split_date):
+        if len(element) == 1:
+            split_date[i] = '0' + element
+        if len(element) == 3:
+            split_date[i] = element[1:]
 
+    whole_date = '/'.join(split_date)
 
     if verbose: print("Final date:", whole_date)
     return whole_date
@@ -184,7 +207,7 @@ def DateErrors(whole_date, verbose=False):
 insert_letter = [['0', 'O'], ['1', 'K'],['2', 'S'], ['3', 'B'], ['4', 'Y'], ['5', 'S'], ['6', 'G'], ['7', 'Y'], ['8', 'F'], \
                  ['U', 'V'], ['E', 'F'], ['X', 'K'], ['I', 'K'], ['C', 'G']]
 insert_number = [['G', '6'], ['B', '3'], ['S', '5'], ['Y', '7'], ['T', '1'], ['A', '7'], ['Z', '2'], ['E', '8'], ['I', '1'], \
-                 ['U', '4'], ['Q', '2'], ['J', '1'], ['H', '4'], ['9', '4'], ['/', '1']]
+                 ['U', '4'], ['Q', '2'], ['J', '1'], ['H', '4'], ['9', '4'], ['/', '1'], ['L', '6']]
 
 def ReplaceNumber(identity, i, verbose=False):
     """Replaces the erroneous number at index i with a matched alternative from numbers_to_letters. (e.g.

@@ -11,7 +11,7 @@ import shutil
 from corrections import *
 from image import * 
 
-def ListAvaliableFiles(bucket_name, prefix, verbose=False):
+def ListAvaliableFiles(bucket_name, prefix='', verbose=False):
     """Lists all avaliable files in the bucket. Useful for cycling through all files in a loop."""
     storage_client = storage.Client()
     file_list = storage_client.list_blobs(bucket_name, prefix=prefix)
@@ -33,13 +33,13 @@ def CorrectedLabel(file, storage_type='remote', verbose=False):
               on a local pc or 'remote' if stored on the google cloud.")
         
     cropped_image = CroppedImage(image, verbose=verbose)
-    output_string, word_confidences = ReadImage(cropped_image, verbose=verbose)
-    label = FindErrors(output_string, verbose=verbose)
+    initial_label, word_confidences = ReadImage(cropped_image, verbose=verbose)
+    corrected_label = FindErrors(initial_label, verbose=verbose)
     
-    print("\nInitial label:", output_string,
-        "\nCorrected label:", label)
+    if verbose: print("\nInitial label:", initial_label,
+                "\nCorrected label:", corrected_label)
     
-    return image, output_string, label, word_confidences
+    return image, initial_label, corrected_label, word_confidences
 
 
 def ReanalysePredictions(prediction_file, verbose=False):
