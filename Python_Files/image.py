@@ -5,7 +5,7 @@ import numpy as np
 from io import BytesIO
 import os
 import csv
-
+import time
 from corrections import *
 
 def RetreiveImage(file, verbose=False): 
@@ -14,11 +14,14 @@ def RetreiveImage(file, verbose=False):
     storage_client = storage.Client()
     bucket = storage_client.bucket(bucket_name)
 
-    file_list = storage_client.list_blobs(bucket_name)
-    file_list = [file.name for file in file_list]
+    # tic = time.time()
+
+    # file_list = storage_client.list_blobs(bucket_name)
+    # file_list = [file.name for file in file_list]
+    # print ("Time taken to read image from google bucket: ", time.time() - tic)
 
     blob = bucket.blob(file)
-    
+
     img_bytes = BytesIO(blob.download_as_bytes())
 
     if verbose: print("\nImage has been read from google bucket.")
