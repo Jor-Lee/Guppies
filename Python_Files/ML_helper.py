@@ -165,7 +165,16 @@ class DataGenerator(keras.utils.Sequence):
         'Generates data containing batch_size samples' # X : (n_samples, *dim, n_channels)
         # Initialization
         X = self.h5_file['images'][list_IDs_temp]
-        Y = self.h5_file['labels'][list_IDs_temp]
+        Y = labels_to_logits(self.h5_file['labels'][list_IDs_temp])
+
+        return X[...,None], Y #{"image":X[...,None], "label": Y}    
 
 
-        return {"image":X[...,None], "label": Y}    
+def labels_to_logits(labels):
+    logits = np.zeros((len(labels), 8,23))
+
+    for n in range(len(labels)):
+        for i, label in enumerate(labels[n]):
+            if label != 99:
+                logits[n, i, -1] = 1
+    return logits
