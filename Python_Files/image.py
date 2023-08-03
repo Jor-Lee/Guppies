@@ -48,7 +48,7 @@ def CroppedImage(img_bytes, verbose=False):
     left = 1 * width / 4
     right = 3 * width / 4
     top = 0
-    bottom = height / 3
+    bottom = height * (2 / 5)
     cropped_image = img.crop((left, top, right, bottom))
 
     cropped_byte_arr = BytesIO()
