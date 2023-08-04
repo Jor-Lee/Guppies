@@ -276,10 +276,12 @@ def preprocess_string(output_string, verbose=False):
     # Remove any empty elements.
     output_split[:] = [x for x in output_split if len(x) > 0]
 
-    # First drop anything before the title. 
-    if output_split[0][0] != 'F' and output_split[0][0] != 'M':
+    # First drop everything before the title. 
+    lead_character = output_split[0][0]
+    if lead_character != 'F' and lead_character != 'M':
         if verbose: print("Dropping", output_split[0][0], "as label does not begin with 'M' or 'F'.")
         output_split = output_split[1:]
+        lead_character = output_split[0][0]
 
     # Removes any characters added to the end of the title. Often A's or X's from people puting stars on the label. e.g. FCAX -> FCA
     if len(output_split[0]) == 4:
