@@ -10,10 +10,6 @@ from image import *
 
 def ReadImage(img_byte_array, verbose=False):
     """Reads an image as an array of bytes and returns the text in the output format required."""
-    from google.cloud import vision
-    from PIL import Image
-    import numpy as np
-
     client = vision.ImageAnnotatorClient()
     content = img_byte_array.getvalue()
     image = vision.Image(content=content)
