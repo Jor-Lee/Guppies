@@ -5,6 +5,8 @@ import numpy as np
 from io import BytesIO
 import os
 import tensorflow as tf
+import torch.nn as nn
+import torch
 
 import tensorflow.keras as keras
 
@@ -91,10 +93,14 @@ def preprocess_image(image, img_size):
 
 
 def vectorize_label(label, char_to_num, max_len, padding_token):
+
+    pad_amount = max_len - len(label)
+    label = label + ' '*pad_amount
+
     label = char_to_num(tf.strings.unicode_split(label, input_encoding="UTF-8"))
-    length = tf.shape(label)[0]
-    pad_amount = max_len - length
-    label = tf.pad(label, paddings=[[0, pad_amount]], constant_values=padding_token)
+    # length = tf.shape(label)[0]
+    # pad_amount = max_len - length
+    # label = tf.pad(label, paddings=[[0, pad_amount]], constant_values=padding_token)
     return label
 
 
@@ -125,12 +131,13 @@ def vectorize_label(label, char_to_num, max_len, padding_token):
     
 class DataGenerator(keras.utils.Sequence):
     'Generates data for Keras'
-    def __init__(self, h5_file, idxs, batch_size=32, shuffle=True):
+    def __init__(self, h5_file, idxs, batch_size=32, shuffle=True, ctc=False):
         'Initialization'
         self.h5_file = h5_file
         self.batch_size = batch_size
         self.list_IDs = idxs
         self.shuffle = shuffle
+        self.ctc = ctc
         self.on_epoch_end()
 
     def __len__(self):
@@ -165,9 +172,15 @@ class DataGenerator(keras.utils.Sequence):
         'Generates data containing batch_size samples' # X : (n_samples, *dim, n_channels)
         # Initialization
         X = self.h5_file['images'][list_IDs_temp]
-        Y = labels_to_logits(self.h5_file['labels'][list_IDs_temp])
 
-        return X[...,None], Y #{"image":X[...,None], "label": Y}    
+        if self.ctc:
+            Y = self.h5_file['labels'][list_IDs_temp]
+            return {"image":X[...,None], "label": Y}
+
+        else:
+            Y = labels_to_logits(self.h5_file['labels'][list_IDs_temp])
+
+            return X[...,None], Y 
 
 
 def labels_to_logits(labels):
@@ -176,5 +189,38 @@ def labels_to_logits(labels):
     for n in range(len(labels)):
         for i, label in enumerate(labels[n]):
             if label != 99:
+                logits[n, i, label] = 1
+            else:
                 logits[n, i, -1] = 1
     return logits
+
+
+class CNN(nn.Module):
+    def __init__(self, no_classes):
+        super(CNN, self).__init__()
+        self.conv1 = nn.Sequential(         
+            nn.Conv2d(
+                in_channels=1,              
+                out_channels=16,            
+                kernel_size=5,              
+                stride=1,                   
+                padding=2,                  
+            ),                              
+            nn.ReLU(),                      
+            nn.MaxPool2d(kernel_size=2),    
+        )
+        self.conv2 = nn.Sequential(         
+            nn.Conv2d(16, 32, 5, 1, 2),     
+            nn.ReLU(),                      
+            nn.MaxPool2d(2),                
+        )
+        # fully connected layer, output 10 classes
+        self.out = nn.Linear(32 * 7 * 7, no_classes)
+    def forward(self, x):
+        x = self.conv1(x)
+        x = self.conv2(x)
+        # flatten the output of conv2 to (batch_size, 32 * 7 * 7)
+        x = x.view(x.size(0), -1)       
+        output = self.out(x)
+        return output, x    # return x for visualization
+
