@@ -58,4 +58,3 @@ def CroppedImage(img_bytes, verbose=False):
     if verbose: print("\nImage has been cropped.")
 
     return cropped_byte_arr
-    
