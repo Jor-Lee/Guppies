@@ -6,7 +6,7 @@ from io import BytesIO
 import os
 import csv
 
-from image import * 
+from image_reading import * 
 
 def ReadImage(img_byte_array, verbose=False):
     """Reads an image as an array of bytes and returns the text in the output format required."""

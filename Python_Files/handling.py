@@ -9,7 +9,7 @@ from tempfile import NamedTemporaryFile
 import shutil
 
 from corrections import *
-from image import * 
+from image_reading import * 
 
 def ListAvaliableFiles(bucket_name, prefix='', verbose=False):
     """Lists all avaliable files in the bucket. Useful for cycling through all files in a loop."""
