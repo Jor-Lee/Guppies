@@ -55,8 +55,6 @@ def combine_boxes(boxes):
     Y_Low = Y_points[:number_of_points//2]
     Y_High = Y_points[number_of_points//2:]
 
-    X_min = np.mean(X_Low)
-    X_max = np.mean(X_High)
     Y_min = np.mean(Y_Low)
     Y_max = np.mean(Y_High)
 
@@ -66,11 +64,6 @@ def combine_boxes(boxes):
     para_box[1] = [X_points.max(), Y_min]
     para_box[2] = [X_points.max(), Y_max]
     para_box[3] = [X_points.min(), Y_max]
-
-    # para_box[0] = [X_points.min(), Y_points.min()]
-    # para_box[1] = [X_points.max(), Y_points.min()]
-    # para_box[2] = [X_points.max(), Y_points.max()]
-    # para_box[3] = [X_points.min(), Y_points.max()]
 
     return para_box
 
@@ -121,6 +114,96 @@ def zero_printed_text(image, threshold=40, verbose=False):
     dilated = cv2.dilate(mask, np.ones((9,9), np.uint8), iterations=1)
 
     return image * (1-dilated)
+
+def mask_and_remove(frame, verbose=False):
+    if verbose: fig,ax = plt.subplots(1,3,dpi=250)
+    if verbose: ax[0].imshow(frame)
+
+    # Average out the RGB axis
+    averaged_frame = np.mean(frame,axis=2)
+    if verbose: ax[1].imshow(averaged_frame)
+
+
+    # White background masking
+    hist = np.histogram(averaged_frame, bins=100)
+    centers = 0.5*(hist[1][1:]+ hist[1][:-1])
+
+    thresh_val = np.argmax(hist[0] > np.max(hist[0]) * 0.2)
+    upper_thresh = centers[thresh_val] * 0.95
+
+    # Dark writing masking. Mask based on central row of frame
+    frame_shape = np.shape(averaged_frame)
+    row1 = -averaged_frame[2 * frame_shape[0] // 5][100:-100]
+    row2 = -averaged_frame[3 * frame_shape[0] // 5][100:-100]
+    rows = np.concatenate((row1, row2))
+    row_mean = np.mean(rows)
+    row_max = np.max(rows)
+    row_min = np.min(rows)
+    peaks,_ = scipy.signal.find_peaks(rows, height = row_mean + ((row_max - row_min) / 5), distance=4)
+
+    values = []
+    for peak in peaks:
+        values.append(-rows[peak])
+
+    sorted_values = np.sort(values)
+
+    lower_thresh = sorted_values[0] * 1
+
+    if verbose: print('(upper thresh, lower_thresh) = (%.2f, %.2f)' %(upper_thresh, lower_thresh))
+
+    averaged_frame[averaged_frame>upper_thresh] = 0
+    averaged_frame[averaged_frame<lower_thresh] = 0
+    averaged_frame[averaged_frame!=0] = 255
+
+    if verbose: ax[2].imshow(averaged_frame)
+
+    return averaged_frame
+
+def remove_deltas(frame, width, padx=60, pady=30, verbose=False):
+    if verbose: fig,ax = plt.subplots(1,2,dpi=250)
+    # Removes thin strands from the image
+    frame_shape = np.shape(frame)
+
+    for i, row in enumerate(frame):
+        for j, column in enumerate(row):
+            if i == 0:
+                pass
+            else:
+                if frame[i, j] != 0:
+                    i_lower = max(i - width, 0)
+                    j_lower = max(j - width, 0)
+                    i_higher = min(i+width, frame_shape[0])
+                    j_higher = min(j+width, frame_shape[1])
+
+                    surroundings = frame[i_lower:i_higher, j_lower:j_higher]
+                    condition = surroundings == 255.
+                    count = np.count_nonzero(condition)
+
+                    surroundings_shape = np.shape(surroundings)
+                    surroundings_elements_number = surroundings_shape[0] * surroundings_shape[1]
+
+                    if count < surroundings_elements_number // 5:
+                        frame[i, j] = 0
+
+    # Similar to clear border but not as aggressive.
+    # for i in range(frame_shape[1]):
+    #     column = frame[:,i]
+    #     if np.array_equal(column, np.full(len(column), 255.)):
+    #         frame[:, i] = np.full(len(column), 0)
+
+    if verbose: ax[0].imshow(frame)
+
+    from skimage.segmentation import clear_border
+    # kernel = np.ones((5, 5), np.uint8)
+    # cleared_frame = cv2.erode(averaged_frame, kernel, iterations=1)
+    
+    cleared_frame = clear_border(frame)
+
+    cleared_frame[pady:-pady, padx:-padx] = frame[pady:-pady, padx:-padx]
+
+    if verbose: ax[1].imshow(cleared_frame)
+
+    return cleared_frame
 
 
 def GetImageAndParaBox(image_in_bytes, client, verbose=False):
@@ -400,7 +483,7 @@ def extract_ID_handwriting(frame, paragraph_vertices, verbose=False):
 
     adapted_para_box[x[:2],0] = np.max( np.stack(( paragraph_vertices[x[:2],0] - padx , [0,0] )), axis=0)
 
-    adapted_para_box[x[2:],0] = np.min( np.stack(( paragraph_vertices[x[2:],0] + padx , [frame.shape[1] - 1,frame.shape[1] - 1] )), axis=0)
+    adapted_para_box[x[2:],0] = np.min( np.stack(( paragraph_vertices[x[2:],0] + 1.2*padx , [frame.shape[1] - 1,frame.shape[1] - 1] )), axis=0)
 
     adapted_para_box[y[:2],1] = np.max( np.stack(( paragraph_vertices[y[:2],1] - pady, [0,0] )), axis=0) 
     adapted_para_box[y[2:],1] = np.min( np.stack(( paragraph_vertices[y[2:],1] + pady , [frame.shape[0] - 1,frame.shape[0] - 1])), axis=0)
