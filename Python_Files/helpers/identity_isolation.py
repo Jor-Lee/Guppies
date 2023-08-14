@@ -454,11 +454,7 @@ def GetImageAndParaBox(image_in_bytes, client, verbose=False):
     return output_string[:-1], frame, character_boxes
 
 
-def extract_ID_handwriting(frame, paragraph_vertices, verbose=False):
-        
-    padx = 60
-    pady = 30
-
+def extract_ID_handwriting(frame, paragraph_vertices, padx=60, pady=30, verbose=False):
     #firstly find the box around the identity, and also calculate the approx angle of rotation of that box. 
     adapted_para_box = paragraph_vertices.copy()
 
