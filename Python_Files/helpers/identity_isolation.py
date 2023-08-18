@@ -24,7 +24,7 @@ def extract_vertices(bounding_box):
         vertices.append((vertex.x, vertex.y))
     return vertices
 
-def combine_boxes(boxes):
+def combine_boxes(boxes, verbose=False):
     # Given a list of boxes, combines them into a single box that spans from (x_min, y_min) to (x_max, y_max).
     X_points = []
     Y_points = []
@@ -46,12 +46,21 @@ def combine_boxes(boxes):
     Y_min = np.mean(Y_Low)
     Y_max = np.mean(Y_High)
 
+    if len(boxes) == 3:
+        if verbose: print('Only three bounding boxes - elongating box.')
+        X_min = X_points.min() - 100
+        X_max = X_points.max() + 100
+
+    else:
+        X_min = X_points.min()
+        X_max = X_points.max()
+
     para_box = np.zeros((4,2), dtype=np.int32)
 
-    para_box[0] = [X_points.min(), Y_min]
-    para_box[1] = [X_points.max(), Y_min]
-    para_box[2] = [X_points.max(), Y_max]
-    para_box[3] = [X_points.min(), Y_max]
+    para_box[0] = [X_min, Y_min]
+    para_box[1] = [X_max, Y_min]
+    para_box[2] = [X_max, Y_max]
+    para_box[3] = [X_min, Y_max]
 
     return para_box
 
@@ -119,13 +128,13 @@ def mask_and_remove(frame, verbose=False):
     hist = np.histogram(averaged_frame, bins=100)
     centers = 0.5*(hist[1][1:]+ hist[1][:-1])
 
-    thresh_val = np.argmax(hist[0] > np.max(hist[0]) * 0.2)
+    thresh_val = np.argmax(hist[0] > np.max(hist[0]) * 0.25)
     upper_thresh = centers[thresh_val] * 0.95
 
     # Dark writing masking. Mask based on central row of frame
     frame_shape = np.shape(averaged_frame)
-    row1 = -averaged_frame[2 * frame_shape[0] // 5][100:-100]
-    row2 = -averaged_frame[3 * frame_shape[0] // 5][100:-100]
+    row1 = -averaged_frame[2 * frame_shape[0] // 5][200:-200]
+    row2 = -averaged_frame[3 * frame_shape[0] // 5][200:-200]
     rows = np.concatenate((row1, row2))
     row_mean = np.mean(rows)
     row_max = np.max(rows)
@@ -153,7 +162,7 @@ def mask_and_remove(frame, verbose=False):
 def remove_deltas(frame, width, padx=60, pady=30, verbose=False):
     """Removes thin strands from the image and clears the border. The border clearing is limited to within the padding zone. If anything
     is removed from within the bounding box, this is undone. This stops whole characters being removed due to boundary clearing."""
-    if verbose: fig,ax = plt.subplots(1,2,dpi=250)
+    if verbose: fig,ax = plt.subplots(1,3,dpi=250)
 
     frame_shape = np.shape(frame)
 
@@ -184,9 +193,41 @@ def remove_deltas(frame, width, padx=60, pady=30, verbose=False):
     cleared_frame = clear_border(frame)
 
     # Undo any clearing of content within the unpadded bounding box (to ensure whole characters arent removed).
-    cleared_frame[pady:-pady, padx:-padx] = frame[pady:-pady, padx:-padx]
+    if padx == 0:
+        cleared_frame[pady:-pady, :] = frame[pady:-pady, :]
+    else:
+        cleared_frame[pady:-pady, padx:-padx] = frame[pady:-pady, padx:-padx]
 
     if verbose: ax[1].imshow(cleared_frame)
+
+    # Remove deltas again after clearing the frame.
+
+    frame = cleared_frame
+
+    frame_shape = np.shape(frame)
+
+    for i, row in enumerate(frame):
+        for j, column in enumerate(row):
+            if i == 0:
+                pass
+            else:
+                if frame[i, j] != 0:
+                    i_lower = max(i - width, 0)
+                    j_lower = max(j - width, 0)
+                    i_higher = min(i+width, frame_shape[0])
+                    j_higher = min(j+width, frame_shape[1])
+
+                    surroundings = frame[i_lower:i_higher, j_lower:j_higher]
+                    condition = surroundings == 255.
+                    count = np.count_nonzero(condition)
+
+                    surroundings_shape = np.shape(surroundings)
+                    surroundings_elements_number = surroundings_shape[0] * surroundings_shape[1]
+
+                    if count < surroundings_elements_number // 5:
+                        frame[i, j] = 0
+
+    if verbose: ax[2].imshow(frame)  
 
     return cleared_frame
 
@@ -194,7 +235,6 @@ def remove_deltas(frame, width, padx=60, pady=30, verbose=False):
 def GetImageAndParaBox(image_in_bytes, client, verbose=False):
     # Takes the whole image and returns the initially read output string, an image which contains 
     # the label (either cropped or whole), and the boxes around each of the charaters in the identity.
-    client = vision.ImageAnnotatorClient()
     whole_image = image_in_bytes
 
     img_byte_array = CroppedImage(whole_image, verbose=False)
@@ -333,17 +373,10 @@ def GetImageAndParaBox(image_in_bytes, client, verbose=False):
             if verbose: print('Reduced characters are now:', characters)
             if verbose: print('Lead character is now:', lead_character)
 
-            # If we drop below 7 characters then end then break
+            # If we drop below 7 characters then end.
             if len(characters) < 7:
                 if verbose: print("Not enough characters to continue. Breaking the cycle.")
                 return 1
-
-    # Remove any trailing *'s or x's
-    if characters[0] == '*' or characters[0] == 'x' or characters[0] == 'X':
-        characters = characters[1:]
-        character_params = character_params[1:]
-        character_heights = character_heights[1:]
-        if verbose: print('Removing special character after title.')
 
     # Removing the three title characters:
     if verbose: print('Removing the title characters')
@@ -353,15 +386,12 @@ def GetImageAndParaBox(image_in_bytes, client, verbose=False):
     character_heights = character_heights[3:]
     if verbose: print('Remaining characters are:', characters)
 
-    # Removing potential *'s from the title:
-    if characters[0] == '*' or characters[0] == 'x':
+    # Remove any trailing *'s, x's or #'s
+    if characters[0] == '*' or characters[0] == 'x' or characters[0] == 'X' or characters[0] == '#':
         characters = characters[1:]
         character_params = character_params[1:]
         character_heights = character_heights[1:]
-
-    if len(characters) < 4:
-                if verbose: print("Not enough characters to continue. Breaking the cycle.")
-                return 1
+        if verbose: print('Removing special character after title.')
 
     # Remove the date and everything after
     if verbose: print('Removing date and characters after date')
@@ -375,24 +405,36 @@ def GetImageAndParaBox(image_in_bytes, client, verbose=False):
             if verbose: print("No '-' characters either. Cannot find date. Skipping step.")
             pass
         
+    # Figure out if date is in the mm/dd/yy format or m/dd/yy format 
+    # (how many numbers are in the first stage of the date).
+    # Can't check for date starting '0' since 'O' can be the final letter of the
+    # ID and is often confused for '0'
+    if characters[date_index - 2] == '1':
+        characters = characters[:date_index - 2]
+        character_params = character_params[:date_index - 2]
+        character_heights = character_heights[:date_index - 2]
+        if verbose: 
+            print('Remaining characters are:', characters)
+            print('Ramaining character heights:', character_heights)
     
-    characters = characters[:date_index - 1]
-    character_params = character_params[:date_index - 1]
-    character_heights = character_heights[:date_index - 1]
-    if verbose: 
-        print('Remaining characters are:', characters)
-        print('Ramaining character heights:', character_heights)
+    else:
+        characters = characters[:date_index - 1]
+        character_params = character_params[:date_index - 1]
+        character_heights = character_heights[:date_index - 1]
+        if verbose: 
+            print('Remaining characters are:', characters)
+            print('Ramaining character heights:', character_heights)
 
     if len(characters) < 3:
         if verbose: print("Not enough characters to continue. Breaking the cycle.")
         return 1, 1, 1
 
-    # Character in the 3rd position of height.
+    # Character in the [-2] position of height.
     ordered_height = np.argsort(character_heights)
     if verbose: print('Character heights are:', character_heights)
     if verbose: print('Character height order is:', ordered_height)
     # focused_index = ordered_height[5]
-    focused_index = 2
+    focused_index = -2
     if verbose: print('Character and height in position 3 is:', characters[focused_index], character_heights[focused_index])
 
     # 3rd character bounding box is:
@@ -419,13 +461,27 @@ def GetImageAndParaBox(image_in_bytes, client, verbose=False):
             ID_indices = ID_indices[:i + 1]
 
     # If less than 4 characters in the ID, then manually add more.
-    while len(ID_indices) < 4:
-        if np.min(np.array(ID_indices)) == 0:
-            also_include_index = np.max(np.array(ID_indices)) + 1
-        else:
-            also_include_index = np.min(np.array(ID_indices)) - 1
-        ID_indices.insert(0, np.array(also_include_index))
-        if verbose: print('Less than 4 chracters in ID. Adding', characters[also_include_index])
+    remaining_character_length = len(characters)
+    if remaining_character_length > 3:
+        while len(ID_indices) < 4:
+            if np.min(np.array(ID_indices)) == 0:
+                also_include_index = np.max(np.array(ID_indices)) + 1
+            else:
+                also_include_index = np.min(np.array(ID_indices)) - 1
+            ID_indices.insert(0, np.array(also_include_index))
+            if verbose: print('Less than 4 chracters in ID. Adding', characters[also_include_index])
+
+    elif remaining_character_length == 3:
+        while len(ID_indices) < 3:
+            if np.min(np.array(ID_indices)) == 0:
+                also_include_index = np.max(np.array(ID_indices)) + 1
+            else:
+                also_include_index = np.min(np.array(ID_indices)) - 1
+            ID_indices.insert(0, np.array(also_include_index))
+            if verbose: print('Less than 3 chracters in ID. Adding', characters[also_include_index])
+
+    else:
+        return 1
 
     ID_characters = []
     ID_character_params = []
@@ -444,6 +500,11 @@ def GetImageAndParaBox(image_in_bytes, client, verbose=False):
         except: pass
 
     if verbose: print('Included characters and their indicies are:', ID_characters, ID_indices)
+
+    if ID_characters.count('/') > 1:
+        if verbose: print('More than one "/" in ID_characters. Chances are, the date\
+            has been identified. Returning "1"')
+        return 1
 
     if verbose: print('Number of bounding boxes', len(ID_vertices))
 
