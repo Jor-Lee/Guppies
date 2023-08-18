@@ -48,8 +48,8 @@ def combine_boxes(boxes, verbose=False):
 
     if len(boxes) == 3:
         if verbose: print('Only three bounding boxes - elongating box.')
-        X_min = X_points.min() - 100
-        X_max = X_points.max() + 100
+        X_min = X_points.min() - 80
+        X_max = X_points.max() + 80
 
     else:
         X_min = X_points.min()
