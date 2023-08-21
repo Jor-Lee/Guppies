@@ -24,7 +24,7 @@ def extract_vertices(bounding_box):
         vertices.append((vertex.x, vertex.y))
     return vertices
 
-def combine_boxes(boxes, verbose=False):
+def combine_boxes(boxes, added_length=0, verbose=False):
     # Given a list of boxes, combines them into a single box that spans from (x_min, y_min) to (x_max, y_max).
     X_points = []
     Y_points = []
@@ -48,8 +48,8 @@ def combine_boxes(boxes, verbose=False):
 
     if len(boxes) == 3:
         if verbose: print('Only three bounding boxes - elongating box.')
-        X_min = X_points.min() - 80
-        X_max = X_points.max() + 80
+        X_min = X_points.min() - added_length
+        X_max = X_points.max() + added_length
 
     else:
         X_min = X_points.min()
@@ -64,7 +64,7 @@ def combine_boxes(boxes, verbose=False):
 
     return para_box
 
-def reduce_image(image, box, padx=60, pady=30):
+def reduce_image(image, box, padx=100, pady=80):
     """Takes an image and a bounding box and reduces the image to include only the image inside the (padded!) bounding box."""
     adapted_box = box.copy()
 
