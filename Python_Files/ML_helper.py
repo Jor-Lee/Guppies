@@ -92,16 +92,18 @@ def preprocess_image(image, img_size):
     return image
 
 
-def vectorize_label(label, char_to_num, max_len, padding_token):
+def string_to_vector(labelstring, char_dict, max_len=8):
+    #this file takes a label written in characters (a string) and converts it to a vector of integers based on the dictionary.
 
-    pad_amount = max_len - len(label)
-    label = label + ' '*pad_amount
+    space_token = len(char_dict)
 
-    label = char_to_num(tf.strings.unicode_split(label, input_encoding="UTF-8"))
-    # length = tf.shape(label)[0]
-    # pad_amount = max_len - length
-    # label = tf.pad(label, paddings=[[0, pad_amount]], constant_values=padding_token)
-    return label
+
+    label = [list(char_dict.values()).index(char) for char in labelstring]
+    label = label + [list(char_dict.values()).index('')]*(max_len-len(label))
+    return np.array(label, dtype=np.int32)
+
+def vector_to_string(labelvector, char_dict):
+    return [char_dict[label] for label in labelvector]
 
 
 # class process_image_labels:
