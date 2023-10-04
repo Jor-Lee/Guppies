@@ -1,9 +1,13 @@
 import numpy as np
 import torch 
+from ultralytics import YOLO
 
-def UseYOLO(letter_model, number_model, image_file, probability_threshold=0.5, verbose=False):
+def UseYOLO(letter_model_path, number_model_path, image_file, probability_threshold=0.5, verbose=False):
     relevant_characters =  {0:'0',1:'1',2:'2',3:'3',4:'4',5:'5',6:'6',7:'7',8:'8',9:'B',10:'F',11:'G',12:'K',13:'N',14:'O',15:'P',16:'R',17:'S',18:'V',19:'W',20:'Y', 21:''}
     
+    letter_model = YOLO(letter_model_path)
+    number_model = YOLO(number_model_path)
+
     results_let = letter_model.predict(image_file)[0]
     results_num = number_model.predict(image_file)[0]
 

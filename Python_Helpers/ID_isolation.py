@@ -24,6 +24,15 @@ def IsolateIdentity(Processed_Image_Dictionary, padx=80, pady=20, delta_width=15
     # Clear the border and remove any thin strands from the image.
     Processed_Image_Dictionary = RemoveDeltas(Processed_Image_Dictionary, delta_width=delta_width, padx=padx, pady=pady, verbose=verbose)
 
+    # Run some tests to see if the ID image satisfies certain conditions.
+    shape = np.shape(Processed_Image_Dictionary['frame'])
+    counts = np.count_nonzero(Processed_Image_Dictionary['frame'])
+    validity_test = counts / (shape[0] * shape[1])
+
+    if validity_test < 0.065 or shape[0] < 200 or shape[0] > 450 or shape[1] > 1100:
+        if verbose: print(validity_test, shape)
+        raise ValueError('ID image has failed final condition checks.', 'Vadlidity (<0/065):', validity_test, 'Shape (shape[0]>200, shape[1]<1100):', shape)
+
     return Processed_Image_Dictionary
 
 

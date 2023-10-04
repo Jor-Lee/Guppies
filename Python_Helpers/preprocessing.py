@@ -69,8 +69,8 @@ def RemoveBeginning(Image_Dictionary, verbose=False):
 
     # If not enough characters have initially been read then return error
     if len(Image_Dictionary['characters']) < 7:
-        if verbose: print("Not enough characters have been read.")
-        raise ValueError("Less than 7 characters in label.")
+        if verbose: print("Not enough characters are in the label.")
+        raise ValueError("Less than 7 characters in label.", 'Label:', Image_Dictionary['characters'])
 
     if 'M' in Image_Dictionary['characters'] or 'F' in Image_Dictionary['characters']:
         lead_character = Image_Dictionary['characters'][0]
@@ -90,13 +90,13 @@ def RemoveBeginning(Image_Dictionary, verbose=False):
             # If we drop below 7 characters then end.
             if len(Image_Dictionary['characters']) < 7:
                 if verbose: print("Not enough characters to continue. Breaking the cycle.")
-                raise ValueError("Less than 7 characters in label.")
+                raise ValueError("Less than 7 characters in label.", 'Label:', Image_Dictionary['characters'])
     
     # If there is no 'M' or 'F' in the character list then can't identify the title. 
     # Return error.
     else:
         if verbose: print("No 'M' or 'F' in the character list. Can't identify the title.")
-        raise ValueError("No 'M' or 'F' in the character list.")
+        raise ValueError("No 'M' or 'F' in the character list.", 'List:', Image_Dictionary['characters'])
 
     if verbose: print('The remaining character list', Image_Dictionary['characters'])
             
@@ -121,7 +121,14 @@ def ReduceTitle(Image_Dictionary, verbose=False):
         if params[:-1] == title_word_parameters:
             title.append(Image_Dictionary['characters'][i])
 
-    if len(title) != 3:
+    if len(title) < 3:
+        if verbose: 
+            print('The title is', ''.join(title))
+            print('Too few characters in the title, there should be three (3).')
+            raise ValueError("Title is too short.", 'Title:', title)
+
+
+    if len(title) > 3:
         if verbose: 
             print('The title is', ''.join(title))
             print('Too many characters in the title word, retaining only the first three (3).')
@@ -159,7 +166,14 @@ def RemoveStars(Image_Dictionary, verbose=False):
 def RemoveEnd(Image_Dictionary, verbose=False):
     if verbose: print('\nRemoving everything after the date.')
 
+    if '/' not in Image_Dictionary['characters']:
+        if verbose: 
+            print("No '/' or '-' characters have been read from the label.")
+            print("Can't identify the date.")
+            raise ValueError("Can't identify the date, no'/'.", 'Characters:', Image_Dictionary['characters'])
+
     joined_characters = ''.join(Image_Dictionary['characters'])
+
     final_date_index = joined_characters.rfind('/') + 3
 
     Image_Dictionary['characters'] = Image_Dictionary['characters'][:final_date_index]
@@ -208,5 +222,13 @@ def IndentifyWords(Image_Dictionary, verbose=False):
 
         if param[-2] == 2:
             date += Image_Dictionary['characters'][i]
+
+    if len(title) != 3:
+        if verbose: print('\nTitle:', title)
+        raise ValueError("Incorrect title length.", 'Title:', title)
+    
+    if len(date) < 5 or len(date) > 9:
+        if verbose: print('\nDate:', date)
+        raise ValueError("Date is the incorrect length.", 'Date', date)
 
     return title, ID, date
