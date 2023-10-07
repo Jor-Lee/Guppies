@@ -6,19 +6,32 @@ from io import BytesIO
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
+import dropbox
 
-def ListAvaliableFiles(bucket_name, prefix='', verbose=False):
+
+def ListGoogleFiles(bucket_name, prefix='', verbose=False):
     """Lists all avaliable files in the bucket. Useful for cycling through all files in a loop."""
     storage_client = storage.Client()
     file_list = storage_client.list_blobs(bucket_name, prefix=prefix)
     file_list = [file.name for file in file_list]
-    if verbose: print("\nFiles have been read.")
+    if verbose: print("\nFiles have been read from Google.")
     return file_list
 
 
-def RetreiveImage(bucket_name, file, verbose=False): 
+def ListDropBoxFiles(dbx, bucket_name, prefix='', verbose=False):
+    file_list = []
+    
+    for file in dbx.files_list_folder('/%s/%s' %(bucket_name, prefix), recursive=True).entries:
+        if 'size' in dir(file):
+            file_list.append(file.path_display)
+        else: continue
+
+    if verbose: print("\nFiles have been read from Dropbox.")
+    return file_list
+
+def RetreiveImageGoogle(bucket_name, file, verbose=False): 
     """Retreives an image from the google cloud bucket and returns it as an array of bytes."""
-    bucket_name = "guppy_images"
+    # bucket_name = "guppy_images"
     storage_client = storage.Client()
     bucket = storage_client.bucket(bucket_name)
 
@@ -27,11 +40,18 @@ def RetreiveImage(bucket_name, file, verbose=False):
     img_bytes = BytesIO(blob.download_as_bytes())
 
     if verbose: print("\nImage has been read from google bucket.")
-
     return img_bytes
 
 
-def LoadImage(file, verbose=False):
+def RetreiveImageDropBox(dbx, file_name, verbose=False): 
+    """Retreives an image from a dropbox folder and returns it as an array of bytes."""
+    img_bytes = BytesIO(dbx.files_download(file_name)[1].content)
+
+    if verbose: print("\nImage has been read from google DropBox.")
+    return img_bytes
+
+
+def RetreiveImageLocal(file, verbose=False):
     """Reads a local image and returns an array of bytes. Similar to RetreiveImage function but for local data."""
     image = Image.open(file)
     byte_arr = BytesIO()
