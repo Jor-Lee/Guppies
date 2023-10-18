@@ -97,7 +97,8 @@ def string_to_vector(labelstring, char_dict, max_len=8):
     space_token = len(char_dict)
 
     label = [list(char_dict.values()).index(char) for char in labelstring]
-    label = label + [list(char_dict.values()).index('')]*(max_len-len(label))
+    if len(labelstring) < max_len:
+        label = label + [list(char_dict.values()).index('')]*(max_len-len(label))
     return np.array(label, dtype=np.int32)
 
 def vector_to_string(labelvector, char_dict):
