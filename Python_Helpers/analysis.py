@@ -18,6 +18,6 @@ def DecideID(YOLO_ID, google_ID, verbose=False):
         if verbose: print('Invalid YOLO ID. Final ID will use the google prediction:', final_ID)
     else:
         if verbose: print('Invalid YOLO and google IDs. No final ID.')
-        final_ID = ''
+        raise ValueError('Invalid YOLO and google IDs. No final ID.')
 
     return final_ID
