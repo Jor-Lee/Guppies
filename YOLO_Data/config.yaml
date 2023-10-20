@@ -1,6 +1,0 @@
-train: ./images/train
-val: ./images/valid
-test: ./images/test
-
-nc: 22
-names: ['0','1','2','3','4','5','6','7','8','A','B','C','F','G','K','N','O','P','R','S','V','W','Y']
