@@ -4,13 +4,15 @@ import torch
 import tensorflow as tf
 from PIL import Image
 import matplotlib.pyplot as plt
+import random
+import string
 
 
 def UseYOLO(model, ID_image, mapping, probability_threshold=0.5, verbose=False):
     processed_ID_image = prepare_image(ID_image)
 
-    file = './Temp_YOLO_File.jpg'
-
+    file = './' + ''.join(random.choice(string.ascii_lowercase) for i in range(10)) + '.jpg'
+    
     file, processed_ID_image.save(file)
 
     results = model.predict(file)[0]
