@@ -18,13 +18,27 @@ def ListGoogleFiles(bucket_name, prefix='', verbose=False):
     return file_list
 
 
-def ListDropBoxFiles(dbx, bucket_name, prefix='', verbose=False):
+def ListDropBoxFiles(dbx, bucket_name, prefix='', suffix='JPG', verbose=False):
     file_list = []
-    
-    for file in dbx.files_list_folder('/%s/%s' %(bucket_name, prefix), recursive=True).entries:
-        if 'size' in dir(file):
-            file_list.append(file.path_display)
-        else: continue
+    has_more_files = True # because we haven't queried yet
+    cursor = None # because we haven't queried yet
+
+    while has_more_files:
+        if cursor is None: # if it is our first time querying
+            results = dbx.files_list_folder('/%s/%s' %(bucket_name, prefix))
+        else:
+            results = dbx.files_list_folder_continue(cursor)
+        
+        for result in results.entries:
+            if 'size' in dir(result):
+                file = result.path_display
+                if file[-len(suffix):] == suffix or suffix == '':
+                    file_list.append(file)
+                else: continue
+            else: continue
+
+        cursor = results.cursor
+        has_more_files = results.has_more
 
     if verbose: print("\nFiles have been read from Dropbox.")
     return file_list
