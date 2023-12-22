@@ -7,6 +7,7 @@ import numpy as np
 import cv2
 import matplotlib.pyplot as plt
 import dropbox
+import json
 
 
 def ListGoogleFiles(bucket_name, prefix='', verbose=False):
@@ -16,6 +17,15 @@ def ListGoogleFiles(bucket_name, prefix='', verbose=False):
     file_list = [file.name for file in file_list]
     if verbose: print("\nFiles have been read from Google.")
     return file_list
+
+
+def LoadDropboxDetails(path, verbose=False):
+    """Reads DropBox token details."""
+    with open(path) as f: 
+        data = f.read()
+        js = json.loads(data) 
+    
+    return js
 
 
 def ListDropBoxFiles(dbx, bucket_name, prefix='', suffix='JPG', verbose=False):
