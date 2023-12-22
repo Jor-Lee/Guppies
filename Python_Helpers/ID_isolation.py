@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy
 
-def IsolateIdentity(Processed_Image_Dictionary, padx=80, pady=20, delta_width=15, verbose=False):
+def IsolateIdentity(Processed_Image_Dictionary, padx=80, pady=20, delta_width=15, activate_validity_test=True, verbose=False):
     # Reduce the dictionary to contain only ID characters.
     Processed_Image_Dictionary = RetainID(Processed_Image_Dictionary, verbose=verbose)
     
@@ -14,8 +14,6 @@ def IsolateIdentity(Processed_Image_Dictionary, padx=80, pady=20, delta_width=15
 
     # Find the ID bounding box.
     bounding_box = CombineBoxes(Processed_Image_Dictionary['character_bounds'], verbose=verbose)
-
-    Processed_Image_Dictionary['bounding_box'] = bounding_box
 
     # Reduce the image to contain only the ID (with some added padding).
     Processed_Image_Dictionary = ReduceImage(Processed_Image_Dictionary, bounding_box, padx=padx, pady=pady, verbose=verbose)
@@ -31,9 +29,10 @@ def IsolateIdentity(Processed_Image_Dictionary, padx=80, pady=20, delta_width=15
     counts = np.count_nonzero(Processed_Image_Dictionary['frame'])
     validity_test = counts / (shape[0] * shape[1])
 
-    if validity_test < 0.065 or shape[0] < 200 or shape[0] > 450 or shape[1] > 1100:
-        if verbose: print(validity_test, shape)
-        raise ValueError('ID image has failed final condition checks.', 'Vadlidity (<0/065):', validity_test, 'Shape (shape[0]>200, shape[1]<1100):', shape)
+    if activate_validity_test:
+        if validity_test < 0.065 or shape[0] < 200 or shape[0] > 450 or shape[1] > 1100:
+            if verbose: print(validity_test, shape)
+            raise ValueError('ID image has failed final condition checks.', 'Vadlidity (<0/065):', validity_test, 'Shape (shape[0]>200, shape[1]<1100):', shape)
 
     return Processed_Image_Dictionary
 
@@ -147,9 +146,6 @@ def ReduceImage(Processed_Image_Dictionary, boudning_box, padx=80, pady=20, verb
     miny, maxy, minx, maxx = np.min(adapted_box[:,0]), np.max(adapted_box[:,0]), np.min(adapted_box[:,1]), np.max(adapted_box[:,1])
 
     Processed_Image_Dictionary['frame'] = image[minx:maxx, miny:maxy]
-
-    Processed_Image_Dictionary['character_bounds'] = [[Processed_Image_Dictionary['character_bounds'][i][0] - miny, Processed_Image_Dictionary['character_bounds'][i][1] - minx] for i in range(len(Processed_Image_Dictionary['character_bounds']))]
-
 
     return Processed_Image_Dictionary
 

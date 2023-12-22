@@ -4,13 +4,15 @@ import torch
 import tensorflow as tf
 from PIL import Image
 import matplotlib.pyplot as plt
+import random
+import string
 
 
 def UseYOLO(model, ID_image, mapping, probability_threshold=0.5, verbose=False):
     processed_ID_image = prepare_image(ID_image)
 
-    file = './Temp_YOLO_File.jpg'
-
+    file = './' + ''.join(random.choice(string.ascii_lowercase) for i in range(10)) + '.jpg'
+    
     file, processed_ID_image.save(file)
 
     results = model.predict(file)[0]
@@ -26,12 +28,9 @@ def UseYOLO(model, ID_image, mapping, probability_threshold=0.5, verbose=False):
     return characters, boxes, probs, processed_ID_image
 
 
-def distortion_free_resize(image, img_size, char_boxes):
-    orig_height, orig_width = image.shape[:2]
+def distortion_free_resize(image, img_size):
     w, h = img_size
     image = tf.image.resize(image, size=(h, w), preserve_aspect_ratio=True)
-
-    after_scale_height, after_scale_width = image.shape[:2]
 
     # Check tha amount of padding needed to be done.
     pad_height = h - tf.shape(image)[0]
@@ -60,53 +59,26 @@ def distortion_free_resize(image, img_size, char_boxes):
             [0, 0],
         ],
     )
-    
-    if type(char_boxes) != type(None):
-        
 
-
-        new_char_boxes = np.zeros_like(char_boxes)
-        new_char_boxes[:,0] = char_boxes[:,0] * (after_scale_height/orig_height)
-        new_char_boxes[:,1] = char_boxes[:,1] * (after_scale_width/orig_width)
-
-        new_char_boxes[:,0] = new_char_boxes[:,0] + pad_height_top
-        new_char_boxes[:,1] = new_char_boxes[:,1] + pad_width_left
-    
-    else:
-        new_char_boxes = None
     # image = tf.transpose(image, perm=[1, 0, 2])
     # image = tf.image.flip_left_right(image)
-    return image, new_char_boxes
+    return image
 
-
-def preprocess_image(image, img_size, boxes):
+def preprocess_image(image, img_size):
     image = tf.convert_to_tensor(image)
-    image, boxes = distortion_free_resize(image, img_size, boxes)
+    image = distortion_free_resize(image, img_size)
     image = tf.cast(image, tf.float32) / 255.0
-    image = image.numpy()[None,...,0][0]
-    return image, boxes
+    return image
 
 
-def prepare_image(ID_image, pad=False, char_boxes=None):
-
+def prepare_image(ID_image):
     ID_image_width, ID_image_height = 256, 64
-    processed_ID_image,char_boxes = preprocess_image(ID_image[...,None],(ID_image_width,ID_image_height), char_boxes)
+    processed_ID_image = preprocess_image(ID_image[...,None],(ID_image_width,ID_image_height)).numpy()[None,...,0][0]
     processed_ID_image = (((processed_ID_image - processed_ID_image.min()) / (processed_ID_image.max() - processed_ID_image.min())) * 255.9)
-
-    if pad:
-        padamount = (256-64) // 2
-        processed_ID_image = np.pad(processed_ID_image, ((padamount,padamount),(0,0),(0,0)), mode='constant', constant_values=255)
-
     processed_ID_image = Image.fromarray(np.uint8(processed_ID_image))
     processed_ID_image = processed_ID_image.convert("L")
 
-    
-    if type(char_boxes) != type(None):
-
-        return processed_ID_image, char_boxes
-    else:
-        return processed_ID_image
-    
+    return processed_ID_image
 
 def analyse_results(data, prob_threshold):
 
