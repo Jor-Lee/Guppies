@@ -1,0 +1,5 @@
+{
+    "app_key": "Your app key",
+    "app_secret": "Your app secret",
+    "oauth2_refresh_token": "Your refresh token"
+}
